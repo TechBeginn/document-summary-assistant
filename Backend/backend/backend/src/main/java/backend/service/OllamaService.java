@@ -78,18 +78,21 @@ public class OllamaService {
                 """.formatted(lengthInstruction, styleInstruction) + text;
 
         Map<String, Object> request = Map.of(
-                "model", "gemma3",
-                "prompt", prompt,
-                "stream", false
+            "model", "gemma3",
+            "prompt", prompt,
+            "stream", false,
+            "options", Map.of(
+                "num_predict", 500
+        )
         );
 
-        Map response = webClient.post()
-                .uri("/api/generate")
-                .bodyValue(request)
-                .retrieve()
-                .bodyToMono(Map.class)
-                .block();
+Map response = webClient.post()
+        .uri("/api/generate")
+        .bodyValue(request)
+        .retrieve()
+        .bodyToMono(Map.class)
+        .block();
 
-        return response.get("response").toString();
+return response.get("response").toString();
     }
 }

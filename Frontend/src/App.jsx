@@ -4,6 +4,7 @@ function App() {
   const [file, setFile] = useState(null);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
 
   const [summaryLength, setSummaryLength] = useState("standard");
@@ -35,6 +36,50 @@ function App() {
       setMessage("Error connecting to backend.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDownloadPdf = async () => {
+    if (!message) {
+      return;
+    }
+
+    setDownloading(true);
+
+    try {
+      const response = await fetch(
+        "http://localhost:8080/api/download-summary",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "text/plain",
+          },
+          body: message,
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to generate PDF");
+      }
+
+      const blob = await response.blob();
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.download = "document-summary.pdf";
+
+      document.body.appendChild(link);
+      link.click();
+
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error(error);
+      alert("Failed to download the summary PDF.");
+    } finally {
+      setDownloading(false);
     }
   };
 
@@ -301,19 +346,47 @@ function App() {
                 : "0 4px 15px rgba(0,0,0,0.06)",
             }}
           >
-            <h2
+            <div
               style={{
-                marginTop: 0,
-                fontSize: "26px",
-                fontWeight: "800",
-                color: darkMode ? "#60a5fa" : "#1d4ed8",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                gap: "15px",
+                flexWrap: "wrap",
                 borderBottom: `2px solid ${darkMode ? "#374151" : "#dbeafe"
                   }`,
                 paddingBottom: "12px",
+                marginBottom: "20px",
               }}
             >
-              📄 Document Summary
-            </h2>
+              <h2
+                style={{
+                  margin: 0,
+                  fontSize: "26px",
+                  fontWeight: "800",
+                  color: darkMode ? "#60a5fa" : "#1d4ed8",
+                }}
+              >
+                📄 Document Summary
+              </h2>
+
+              <button
+                onClick={handleDownloadPdf}
+                disabled={downloading}
+                style={{
+                  padding: "10px 16px",
+                  borderRadius: "8px",
+                  border: "none",
+                  backgroundColor: "#16a34a",
+                  color: "white",
+                  cursor: downloading ? "not-allowed" : "pointer",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                }}
+              >
+                {downloading ? "Preparing PDF..." : "📥 Download PDF"}
+              </button>
+            </div>
 
             <div>{formatSummary(message)}</div>
           </div>

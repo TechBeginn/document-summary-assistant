@@ -2,7 +2,10 @@ package backend.controller;
 
 import backend.service.PdfService;
 import backend.service.OllamaService;
+import backend.service.SummaryPdfService;
 
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -14,13 +17,16 @@ public class DocumentController {
 
     private final OllamaService ollamaService;
     private final PdfService pdfService;
+    private final SummaryPdfService summaryPdfService;
 
     public DocumentController(
             PdfService pdfService,
-            OllamaService ollamaService) {
+            OllamaService ollamaService,
+            SummaryPdfService summaryPdfService) {
 
         this.pdfService = pdfService;
         this.ollamaService = ollamaService;
+        this.summaryPdfService = summaryPdfService;
     }
 
     @GetMapping("/health")
@@ -53,6 +59,26 @@ public class DocumentController {
         } catch (Exception e) {
             return ResponseEntity.internalServerError()
                     .body("Error reading PDF: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/download-summary")
+    public ResponseEntity<byte[]> downloadSummary(
+            @RequestBody String summary) {
+
+        try {
+            byte[] pdfBytes = summaryPdfService.generatePdf(summary);
+
+            return ResponseEntity.ok()
+                    .header(
+                            HttpHeaders.CONTENT_DISPOSITION,
+                            "attachment; filename=\"document-summary.pdf\""
+                    )
+                    .contentType(MediaType.APPLICATION_PDF)
+                    .body(pdfBytes);
+
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
         }
     }
 }
