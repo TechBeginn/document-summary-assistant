@@ -11,45 +11,71 @@ public class OllamaService {
     private final WebClient webClient;
 
     public OllamaService() {
-    this.webClient = WebClient.builder()
-            .baseUrl("http://localhost:11434")
-            .build();
+        this.webClient = WebClient.builder()
+                .baseUrl("http://localhost:11434")
+                .build();
     }
 
-    public String summarize(String text) {
+    public String summarize(String text, String length, String style) {
+
+        String lengthInstruction = switch (length.toLowerCase()) {
+            case "brief" ->
+                    "Keep the summary very concise. Focus only on the most important information.";
+            case "detailed" ->
+                    "Provide a comprehensive and detailed summary covering major points, supporting details, and important information.";
+            default ->
+                    "Provide a balanced summary covering the main points and important details.";
+        };
+
+        String styleInstruction = switch (style.toLowerCase()) {
+            case "academic" ->
+                    "Use a formal academic tone. Clearly explain concepts and preserve important arguments, findings, and conclusions.";
+
+            case "technical" ->
+                    "Focus on technical concepts, technologies, methodologies, system components, processes, and important specifications.";
+
+            case "resume" ->
+                    "Focus on achievements, skills, responsibilities, technologies, results, and important experience that could be useful for professional or resume purposes.";
+
+            default ->
+                    "Use a clear, professional, and easy-to-understand general style.";
+        };
 
         String prompt = """
-        You are a professional document summarization assistant.
+                You are a professional document summarization assistant.
 
-        Analyze the document and create a clear, structured summary.
+                Summary Length:
+                %s
 
-        Follow this exact format:
+                Summary Style:
+                %s
 
-        ## Overview
-        Give a concise 2-4 sentence overview of the document.
+                Follow this exact format:
 
-        ## Key Points
-        - List the most important points from the document.
-        - Use clear and specific bullet points.
-        - Do not repeat information.
+                ## Overview
+                Give a clear overview of the document.
 
-        ## Important Details
-        - Mention important facts, dates, names, numbers, requirements, or decisions.
-        - Include only information actually present in the document.
+                ## Key Points
+                - List the most important points.
+                - Use clear bullet points.
+                - Do not repeat information.
 
-        ## Conclusion
-        Give a brief conclusion that captures the main takeaway.
+                ## Important Details
+                - Mention important facts, dates, names, numbers, requirements, findings, or decisions.
+                - Include only information actually present in the document.
 
-        Rules:
-        - Do not write one large paragraph.
-        - Use headings and bullet points.
-        - Keep the summary concise but informative.
-        - Do not invent information.
-        - Do not mention that you are an AI.
-        - Return only the summary.
+                ## Conclusion
+                Give the main takeaway from the document.
 
-        Document:
-        """ + text;
+                Rules:
+                - Do not write one large paragraph.
+                - Use headings and bullet points wherever appropriate.
+                - Do not invent information.
+                - Adapt the summary according to the selected length and style.
+                - Return only the structured summary.
+
+                Document:
+                """.formatted(lengthInstruction, styleInstruction) + text;
 
         Map<String, Object> request = Map.of(
                 "model", "gemma3",

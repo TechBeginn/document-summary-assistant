@@ -6,6 +6,9 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
 
+  const [summaryLength, setSummaryLength] = useState("standard");
+  const [summaryStyle, setSummaryStyle] = useState("general");
+
   const handleUpload = async () => {
     if (!file) {
       setMessage("Please select a PDF first.");
@@ -17,6 +20,8 @@ function App() {
 
     const formData = new FormData();
     formData.append("file", file);
+    formData.append("length", summaryLength);
+    formData.append("style", summaryStyle);
 
     try {
       const response = await fetch("http://localhost:8080/api/upload", {
@@ -107,6 +112,16 @@ function App() {
       button: "#2563eb",
     };
 
+  const optionButtonStyle = (selected) => ({
+    padding: "9px 16px",
+    borderRadius: "8px",
+    border: `1px solid ${selected ? "#2563eb" : theme.border}`,
+    backgroundColor: selected ? "#2563eb" : theme.card,
+    color: selected ? "white" : theme.text,
+    cursor: "pointer",
+    fontWeight: "600",
+  });
+
   return (
     <div
       style={{
@@ -118,12 +133,8 @@ function App() {
         transition: "0.3s ease",
       }}
     >
-      <div
-        style={{
-          maxWidth: "850px",
-          margin: "0 auto",
-        }}
-      >
+      <div style={{ maxWidth: "850px", margin: "0 auto" }}>
+
         {/* Header */}
         <div
           style={{
@@ -157,7 +168,6 @@ function App() {
             </p>
           </div>
 
-          {/* Theme Toggle */}
           <button
             onClick={() => setDarkMode(!darkMode)}
             style={{
@@ -188,15 +198,7 @@ function App() {
             marginTop: "25px",
           }}
         >
-          <h2
-            style={{
-              marginTop: 0,
-              fontSize: "21px",
-              fontWeight: "700",
-            }}
-          >
-            Upload Document
-          </h2>
+          <h2 style={{ marginTop: 0 }}>Upload Document</h2>
 
           <p style={{ color: theme.secondaryText }}>
             Select a PDF file to generate its summary.
@@ -208,8 +210,64 @@ function App() {
             onChange={(e) => setFile(e.target.files[0])}
           />
 
-          <br />
-          <br />
+          {/* Summary Length */}
+          <h3
+            style={{
+              marginTop: "25px",
+              marginBottom: "12px",
+              fontSize: "16px",
+            }}
+          >
+            Summary Length
+          </h3>
+
+          <div
+            style={{
+              display: "flex",
+              gap: "10px",
+              marginBottom: "25px",
+              flexWrap: "wrap",
+            }}
+          >
+            {["brief", "standard", "detailed"].map((length) => (
+              <button
+                key={length}
+                onClick={() => setSummaryLength(length)}
+                style={optionButtonStyle(summaryLength === length)}
+              >
+                {length.charAt(0).toUpperCase() + length.slice(1)}
+              </button>
+            ))}
+          </div>
+
+          {/* Summary Style */}
+          <h3
+            style={{
+              marginBottom: "12px",
+              fontSize: "16px",
+            }}
+          >
+            Summary Style
+          </h3>
+
+          <div
+            style={{
+              display: "flex",
+              gap: "10px",
+              marginBottom: "25px",
+              flexWrap: "wrap",
+            }}
+          >
+            {["general", "academic", "technical", "resume"].map((style) => (
+              <button
+                key={style}
+                onClick={() => setSummaryStyle(style)}
+                style={optionButtonStyle(summaryStyle === style)}
+              >
+                {style.charAt(0).toUpperCase() + style.slice(1)}
+              </button>
+            ))}
+          </div>
 
           <button
             onClick={handleUpload}
