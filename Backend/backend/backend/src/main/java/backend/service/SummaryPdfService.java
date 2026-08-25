@@ -69,9 +69,16 @@ public class SummaryPdfService {
                     contentStream.newLineAtOffset(50, y);
                 }
 
-                contentStream.showText(
-                        line.replace("\t", "    ")
-                );
+                String safeLine = line
+                   .replace("\t", "    ")
+                   .replace("•", "-")
+                   .replace("–", "-")
+                   .replace("—", "-")
+                   .replace("’", "'")
+                   .replace("“", "\"")
+                   .replace("”", "\"");
+
+                contentStream.showText(safeLine);
 
                 contentStream.newLineAtOffset(0, -15);
                 y -= 15;

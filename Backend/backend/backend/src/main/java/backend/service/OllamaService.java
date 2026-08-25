@@ -1,5 +1,6 @@
 package backend.service;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -8,11 +9,22 @@ import java.util.Map;
 @Service
 public class OllamaService {
 
+    private final String provider;
+    private final String ollamaModel;
     private final WebClient webClient;
+    private final GroqService groqService;
 
-    public OllamaService() {
+    public OllamaService(
+            @Value("${app.llm.provider:ollama}") String provider,
+            @Value("${ollama.base-url:http://localhost:11434}") String ollamaBaseUrl,
+            @Value("${ollama.model:gemma3}") String ollamaModel,
+            GroqService groqService) {
+
+        this.provider = provider;
+        this.ollamaModel = ollamaModel;
+        this.groqService = groqService;
         this.webClient = WebClient.builder()
-                .baseUrl("http://localhost:11434")
+                .baseUrl(ollamaBaseUrl)
                 .build();
     }
 
@@ -60,11 +72,11 @@ public class OllamaService {
                 - Use clear bullet points.
                 - Do not repeat information.
 
-                ## Important Details
+                Important Details
                 - Mention important facts, dates, names, numbers, requirements, findings, or decisions.
                 - Include only information actually present in the document.
 
-                ## Conclusion
+                Conclusion
                 Give the main takeaway from the document.
 
                 Rules:
@@ -77,22 +89,36 @@ public class OllamaService {
                 Document:
                 """.formatted(lengthInstruction, styleInstruction) + text;
 
-        Map<String, Object> request = Map.of(
-            "model", "gemma3",
-            "prompt", prompt,
-            "stream", false,
-            "options", Map.of(
-                "num_predict", 500
-        )
+        if ("groq".equalsIgnoreCase(provider)) {
+            return groqService.generateSummary(prompt);
+        }
+
+        if ("ollama".equalsIgnoreCase(provider) || provider == null || provider.isBlank()) {
+            Map<String, Object> request = Map.of(
+                    "model", ollamaModel,
+                    "prompt", prompt,
+                    "stream", false,
+                    "options", Map.of(
+                            "num_predict", 500
+                    )
+            );
+
+            Map<?, ?> response = webClient.post()
+                    .uri("/api/generate")
+                    .bodyValue(request)
+                    .retrieve()
+                    .bodyToMono(Map.class)
+                    .block();
+
+            if (response == null || !response.containsKey("response")) {
+                throw new RuntimeException("Empty response from Ollama.");
+            }
+
+            return response.get("response").toString();
+        }
+
+        throw new IllegalArgumentException(
+                "Unsupported LLM provider: '" + provider + "'. Supported providers are 'ollama' and 'groq'."
         );
-
-Map response = webClient.post()
-        .uri("/api/generate")
-        .bodyValue(request)
-        .retrieve()
-        .bodyToMono(Map.class)
-        .block();
-
-return response.get("response").toString();
     }
 }

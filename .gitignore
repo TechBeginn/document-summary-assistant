@@ -3,7 +3,9 @@ Frontend/node_modules/
 Frontend/dist/
 
 # Backend
+**/target/
 Backend/backend/target/
+Backend/backend/backend/target/
 
 # IDE
 .vscode/
@@ -13,6 +15,11 @@ Backend/backend/target/
 .DS_Store
 Thumbs.db
 
-# Environment files
+# Environment & Secret files
 .env
+.env.*
 *.env
+*.env.local
+application-local.properties
+*.key
+*.pem

@@ -1,5 +1,7 @@
 import { useState } from "react";
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
+
 function App() {
   const [file, setFile] = useState(null);
   const [message, setMessage] = useState("");
@@ -25,7 +27,7 @@ function App() {
     formData.append("style", summaryStyle);
 
     try {
-      const response = await fetch("http://localhost:8080/api/upload", {
+      const response = await fetch(`${API_BASE_URL}/api/upload`, {
         method: "POST",
         body: formData,
       });
@@ -48,7 +50,7 @@ function App() {
 
     try {
       const response = await fetch(
-        "http://localhost:8080/api/download-summary",
+        `${API_BASE_URL}/api/download-summary`,
         {
           method: "POST",
           headers: {
